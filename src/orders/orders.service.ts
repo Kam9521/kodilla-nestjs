@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { db, Order } from './../db';
 
@@ -13,6 +13,14 @@ export class OrdersService {
   }
 
   public create(orderData: Omit<Order, 'id'>): Order {
+    const productExists = db.products.some(
+      (product) => product.id === orderData.productId,
+    );
+
+    if (!productExists) {
+      throw new NotFoundException('Product not found');
+    }
+
     const newOrder = {
       ...orderData,
       id: uuidv4(),
