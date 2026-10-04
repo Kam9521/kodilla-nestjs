@@ -1,46 +1,58 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { db, Order } from './../db';
+import { Order } from '@prisma/client';
+import { PrismaService } from '../shared/services/prisma.service';
 
 @Injectable()
 export class OrdersService {
-  public getAll(): Order[] {
-    return db.orders;
+  constructor(private prismaService: PrismaService) {}
+
+  public async getAll(): Promise<Order[]> {
+    return await this.prismaService.order.findMany();
   }
 
-  public getById(id: Order['id']): Order | null {
-    return db.orders.find((order) => order.id === id);
-  }
-
-  public create(orderData: Omit<Order, 'id'>): Order {
-    const productExists = db.products.some(
-      (product) => product.id === orderData.productId,
-    );
-
-    if (!productExists) {
-      throw new NotFoundException('Product not found');
-    }
-
-    const newOrder = {
-      ...orderData,
-      id: uuidv4(),
-    };
-
-    db.orders.push(newOrder);
-    return newOrder;
-  }
-
-  public updateById(id: Order['id'], orderData: Omit<Order, 'id'>): void {
-    db.orders = db.orders.map((order) => {
-      if (order.id === id) {
-        return { ...order, ...orderData };
-      }
-
-      return order;
+  public async getById(id: Order['id']): Promise<Order | null> {
+    return await this.prismaService.order.findUnique({
+      where: {
+        id,
+      },
     });
   }
 
-  public deleteById(id: Order['id']): void {
-    db.orders = db.orders.filter((order) => order.id !== id);
+  public async create(
+    orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Order> {
+    const product = await this.prismaService.product.findUnique({
+      where: {
+        id: orderData.productId,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return await this.prismaService.order.create({
+      data: orderData,
+    });
+  }
+
+  public async updateById(
+    id: Order['id'],
+    orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Order> {
+    return await this.prismaService.order.update({
+      where: {
+        id,
+      },
+      data: orderData,
+    });
+  }
+
+  public async deleteById(id: Order['id']): Promise<Order> {
+    return await this.prismaService.order.delete({
+      where: {
+        id,
+      },
+    });
   }
 }
