@@ -22,6 +22,22 @@ export class ProductsController {
     return await this.productsService.getAll();
   }
 
+  @Get('/extended')
+  async getAllExtended() {
+    return await this.productsService.getAllExtended();
+  }
+
+  @Get('/extended/:id')
+  async getExtendedById(@Param('id', new ParseUUIDPipe()) id: string) {
+    const prod = await this.productsService.getExtendedById(id);
+
+    if (!prod) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return prod;
+  }
+
   @Get('/:id')
   async getById(@Param('id', new ParseUUIDPipe()) id: string) {
     const prod = await this.productsService.getById(id);

@@ -10,6 +10,21 @@ export class ProductsService {
     return await this.prismaService.product.findMany();
   }
 
+  public async getAllExtended(): Promise<Product[]> {
+    return await this.prismaService.product.findMany({
+      include: { orders: true },
+    });
+  }
+
+  public async getExtendedById(id: Product['id']): Promise<Product | null> {
+    return await this.prismaService.product.findUnique({
+      where: {
+        id,
+      },
+      include: { orders: true },
+    });
+  }
+
   public async getById(id: Product['id']): Promise<Product | null> {
     return await this.prismaService.product.findUnique({
       where: {
